@@ -1,0 +1,17 @@
+{
+  "name": "calc-backend",
+  "version": "1.0.0",
+  "description": "Backend for vector assignment calculator",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "author": "Sean Zhao, Patrick Bian, Joshua Wang, Felix Zhao",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "nodemon": "^3.1.7"
+  }
+}
