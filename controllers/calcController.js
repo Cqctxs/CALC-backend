@@ -4,6 +4,8 @@ const config = {
 };
 const math = mathjs.create(mathjs.all, config);
 
+const primes = require("../lib/primes");
+
 const formatVector = ([x, y, z]) => {
   let displayX = "";
   let displayY = "";
@@ -56,12 +58,48 @@ const solveLine = ([x1, y1, z1], [ux, uy, uz], [x2, y2, z2], [vx, vy, vz]) => {
   return solution;
 };
 
+const simplifyRoot = (inRoot) => {
+  let newRoot = inRoot;
+  let outRoot = 1;
+  let factors = new Array(4410).fill(0);
+  let num = inRoot;
+  let i = 0;
+  let divisor = primes[0];
+
+  while (num > 1) {
+    if (num % divisor === 0) {
+      factors[divisor]++;
+      num /= divisor;
+    } else {
+      i++;
+      divisor = primes[i];
+    }
+  }
+
+  for (let i = 2; i < factors.length; i++) {
+    if (factors[i] >= 2) {
+      if (factors[i] % 2 === 0) {
+        outRoot *= math.pow(i, factors[i] / 2);
+        newRoot /= math.pow(i, factors[i]);
+      } else {
+        outRoot *= math.pow(i, (factors[i]-1) / 2);
+        newRoot /= math.pow(i, (factors[i]-1));
+      }
+    }
+  }
+
+  if (newRoot === 1) {
+    return outRoot;
+  } else {
+    return `${outRoot}√${newRoot}`;
+  }
+};
+
 const calc = async (req, res) => {
   const studentNum = req.body.studentNum;
 
   // Ensure studentNum is a string and split it into individual digits
   const num = studentNum.toString().split("").map(Number);
-  console.log(num);
 
   // Map the digits to the arrays A, B, and C using fractions
   const A = [
@@ -86,11 +124,11 @@ const calc = async (req, res) => {
   const AC = math.subtract(C, A);
 
   // 3. Find the perimeter of the triangle ABC
-  const mag_AB_InRoot =
+  const ABInRoot =
     math.square(AB[0]) + math.square(AB[1]) + math.square(AB[2]);
-  const mag_BC_InRoot =
+  const BCInRoot =
     math.square(BC[0]) + math.square(BC[1]) + math.square(BC[2]);
-  const mag_AC_InRoot =
+  const ACInRoot =
     math.square(AC[0]) + math.square(AC[1]) + math.square(AC[2]);
 
   // 4. Find angle A
@@ -101,7 +139,7 @@ const calc = async (req, res) => {
 
   // 5. Area of triangle
   const ABxAC = math.cross(AB, AC);
-  const mag_area_InRoot =
+  const areaInRoot =
     math.square(ABxAC[0]) + math.square(ABxAC[1]) + math.square(ABxAC[2]);
 
   // 6. Volume OABC
@@ -157,6 +195,8 @@ const calc = async (req, res) => {
   t = sol[1][0];
   const H = math.add(A, math.multiply(dirAltitudeA, s));
   console.log(formatVector(H));
+
+
 
   res.status(201).json({ success: "route found" });
 };
