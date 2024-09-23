@@ -13,7 +13,7 @@ app.use(express.json({ strict: true }));
 app.enable("trust proxy");
 app.disable("x-powered-by");
 
-app.use("/test", require("./routes/calc"));
+app.use("/calculate", require("./routes/calc"));
 
 app.use("/", function (req, res) {
   res.json({ error: "endpoint not found" });
