@@ -34,8 +34,10 @@ const formatCartesian = ([a, b, c], d) => {
   let newD = math.multiply(d, lcm);
   const gcd = math.gcd(newN[0].n, math.gcd(newN[1].n, math.gcd(newN[2].n, newD.n)));
   newN = math.divide(newN, gcd);
-  newD = math.divide(newD, gcd);
-  return `${newN[0].n}x + ${newN[1].n}y + ${newN[2].n}z - ${newD.n} = 0`;
+  newD = math.multiply(math.divide(newD, gcd), -1);
+  const sign = (num) => (num >= 0 ? '+' : '-');
+  const leadingSign = (num) => (num >= 0 ? '' : '-');
+  return `${leadingSign(newN[0].s)}${newN[0].n}x ${sign(newN[1].s)} ${Math.abs(newN[1].n)}y ${sign(newN[2].s)} ${Math.abs(newN[2].n)}z ${sign(newD.s)} ${Math.abs(newD.n)} = 0`;
 };
 
 const simplifyDirectionVector = ([x, y, z]) => {
@@ -126,13 +128,15 @@ const calc = async (req, res) => {
   ];
   
   answers.push(`A${formatVector(A)}, B${formatVector(B)}, C${formatVector(C)}`);
+  console.log(`A${formatVector(A)}, B${formatVector(B)}, C${formatVector(C)}`);
 
   // 2. Find displacement vectors
   const AB = math.subtract(B, A);
   const BC = math.subtract(C, B);
   const AC = math.subtract(C, A);
 
-  answers.push(`AB = ${formatVector(AB)}`);
+  answers.push(`AB = ${formatVector(AB)}, BC = ${formatVector(BC)}, AC = ${formatVector(AC)}`);
+  console.log(`AB = ${formatVector(AB)}, BC = ${formatVector(BC)}, AC = ${formatVector(AC)}`);
 
   // 3. Find the perimeter of the triangle ABC
   const ABInRoot = math.square(AB[0]) + math.square(AB[1]) + math.square(AB[2]);
@@ -140,22 +144,26 @@ const calc = async (req, res) => {
   const ACInRoot = math.square(AC[0]) + math.square(AC[1]) + math.square(AC[2]);
 
   answers.push(`Perimeter = ${simplifyRoot(ABInRoot)} + ${simplifyRoot(BCInRoot)} + ${simplifyRoot(ACInRoot)}`);
+  console.log(`Perimeter = ${simplifyRoot(ABInRoot)} + ${simplifyRoot(BCInRoot)} + ${simplifyRoot(ACInRoot)}`);
 
   // 4. Find angle A
   const angleA = math.round(math.unit(math.acos(math.dot(AB, AC) / (math.norm(AB) * math.norm(AC))), "rad").toNumber("deg"), 2);
 
   answers.push(`∠A = ${angleA}`);
+  console.log(`∠A = ${angleA}`);
 
   // 5. Area of triangle
-  const ABxAC = math.divide(math.cross(AB, AC), 2);
+  const ABxAC = math.cross(AB, AC);
   const areaInRoot = math.square(ABxAC[0]) + math.square(ABxAC[1]) + math.square(ABxAC[2]);
 
-  answers.push(`Area = ${simplifyRoot(areaInRoot)}`);
+  answers.push(`Area = ${simplifyRoot(areaInRoot)}/2`);
+  console.log(`Area = ${simplifyRoot(areaInRoot)}/2`);
 
   // 6. Volume OABC
   const volume = math.divide(math.abs(math.dot(math.cross(A, B), C)), 6);
   
   answers.push(`Volume = ${volume.n}/${volume.d}`);
+  console.log(`Volume = ${volume.n}/${volume.d}`);
 
   // 7. Median A
   const MBC = math.divide(math.add(B, C), 2);
@@ -179,6 +187,7 @@ const calc = async (req, res) => {
   )}; u ∈ R`;
 
   answers.push(`Median from A: ${medianA}, Median from B: ${medianB}, Median from C: ${medianC}`);
+  console.log(`Median from A: ${medianA}, Median from B: ${medianB}, Median from C: ${medianC}`);
 
   // 8. Centroid
   let sol = solveLine(A, dirCentroidA, B, dirCentroidB);
@@ -187,6 +196,7 @@ const calc = async (req, res) => {
   const G = math.add(A, math.multiply(dirCentroidA, s));
 
   answers.push(`Centroid: G${formatVector(G)}`);
+  console.log(`Centroid: G${formatVector(G)}`);
 
   // 9. Cartesian equation of plane ABC
   const n = math.cross(AB, AC);
@@ -194,12 +204,14 @@ const calc = async (req, res) => {
   const plane = formatCartesian(n, D);
 
   answers.push(`π: ${plane}`);
+  console.log(`π: ${plane}`);
 
   // 10. Distance from O to plane ABC
   const distNum = math.abs(math.dot(n, A));
   const distInRoot = math.square(n[0]) + math.square(n[1]) + math.square(n[2]);
 
   answers.push(`Distance from O to π: ${distNum}/${simplifyRoot(distInRoot)}`);
+  console.log(`Distance from O to π: ${distNum}/${simplifyRoot(distInRoot)}`);
 
   // 11. Altitude from A to BC
   const dirPerpBC = simplifyDirectionVector(math.cross(n, BC));
@@ -220,6 +232,7 @@ const calc = async (req, res) => {
   )}; u ∈ R`;
 
   answers.push(`Altitude from A: ${altitudeA}, Altitude from B: ${altitudeB}, Altitude from C: ${altitudeC}`);
+  console.log(`Altitude from A: ${altitudeA}, Altitude from B: ${altitudeB}, Altitude from C: ${altitudeC}`);
 
   // 12. Orthrocenter
   sol = solveLine(A, dirPerpBC, B, dirPerpAC);
@@ -228,6 +241,7 @@ const calc = async (req, res) => {
   const H = math.add(A, math.multiply(dirPerpBC, s));
 
   answers.push(`Orthocenter: H${formatVector(H)}`);
+  console.log(`Orthocenter: H${formatVector(H)}`);
 
   // 13. Perpendicular bisector of BC
   const perpBisectorBC = `L7: ${formatVector(MBC)} + s${formatVector(
@@ -245,6 +259,7 @@ const calc = async (req, res) => {
   )}; u ∈ R`;
 
   answers.push(`Perpendicular bisector of BC: ${perpBisectorBC}, Perpendicular bisector of AC: ${perpBisectorAC}, Perpendicular bisector of AB: ${perpBisectorAB}`);
+  console.log(`Perpendicular bisector of BC: ${perpBisectorBC}, Perpendicular bisector of AC: ${perpBisectorAC}, Perpendicular bisector of AB: ${perpBisectorAB}`);
 
   // 14. Circumcenter
   sol = solveLine(MBC, dirPerpBC, MAC, dirPerpAC);
@@ -253,13 +268,16 @@ const calc = async (req, res) => {
   const K = math.add(MBC, math.multiply(dirPerpBC, s));
 
   answers.push(`Circumcenter: K${formatVector(K)}`);
+  console.log(`Circumcenter: K${formatVector(K)}`);
 
   // 15. Check relationship between G, H, and K
   const check = math.subtract(math.subtract(H, K), math.multiply(3, math.subtract(G, K)));
   if (check[0].n === 0 && check[1].n === 0 && check[2].n === 0) {
     answers.push("G, H, and K are collinear, KH - 3KG = 0");
+    console.log("G, H, and K are collinear, KH - 3KG = 0");
   } else {
     answers.push("G, H, and K are not collinear");
+    console.log("G, H, and K are not collinear");
   }
   
   // 16. Euler Line
@@ -267,6 +285,7 @@ const calc = async (req, res) => {
   const euler = `L10: ${formatVector(G)} + s${formatVector(dirEuler)}; s ∈ R`;
 
   answers.push(`Euler Line: ${euler}`);
+  console.log(`Euler Line: ${euler}`);
 
   res.json(answers);
 };
